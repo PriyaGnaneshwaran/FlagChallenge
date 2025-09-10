@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import CoreData
 
-class FlagsChallengeViewModel: ObservableObject {
+class QuestionViewModel: ObservableObject {
     
     @Published var currentQuestionIndex = 0
     @Published var selectedOption: Int?
@@ -19,7 +19,8 @@ class FlagsChallengeViewModel: ObservableObject {
     @Published var gameState: GameState = .playing
     @Published var remainingTime: Int = 30
     @Published var shouldNavigateToSchedule = false
-    
+    @Published var shouldShowCorrectAnswer = false
+
     private var timer: Timer?
     private let totalQuestions = 30
     private let questions: [QuestionsModel]
@@ -66,8 +67,7 @@ class FlagsChallengeViewModel: ObservableObject {
             print("Error saving progress: \(error)")
         }
     }
-    
-    
+
     func startTimer() {
         timer?.invalidate()
         timerValue = 30
@@ -80,40 +80,40 @@ class FlagsChallengeViewModel: ObservableObject {
                 self.timerValue -= 1
             }
             
-            if self.timerValue == 0 {
-                self.timer?.invalidate()
-                
-                if self.selectedOption == nil {
-                    self.isCorrect = false
-                }
-                
+            if self.timerValue == 0 && self.gameState == .playing {
+                self.isCorrect = false // Auto wrong
+                self.self.shouldShowCorrectAnswer = true
                 self.gameState = .showingResult
                 self.saveProgress()
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    self.moveToNextQuestion()
-                }
+                self.timerValue = 10
+            }
+            // When showing result phase ends
+            else if self.timerValue == 0 && self.gameState == .showingResult {
+                self.timer?.invalidate()
+                self.moveToNextQuestion()
             }
         }
     }
-    
+
     func selectOption(_ id: Int) {
         guard gameState == .playing else { return }
-        
+
         selectedOption = id
         isCorrect = (id == questions[currentQuestionIndex].answer_id)
-        
+
         if isCorrect == true {
             score += 1
         }
-        
+
         gameState = .showingResult
         saveProgress()
+        timerValue = 10
     }
-    
+
     func moveToNextQuestion() {
         selectedOption = nil
         isCorrect = nil
+        shouldShowCorrectAnswer = false
         
         if currentQuestionIndex < questions.count - 1 {
             currentQuestionIndex += 1

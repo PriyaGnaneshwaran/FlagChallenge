@@ -9,10 +9,10 @@ import SwiftUI
 
 struct QuestionView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @StateObject private var viewModel: FlagsChallengeViewModel
+    @StateObject private var viewModel: QuestionViewModel
     
     init() {
-        _viewModel = StateObject(wrappedValue: FlagsChallengeViewModel(context: PersistenceController.shared.container.viewContext))
+        _viewModel = StateObject(wrappedValue: QuestionViewModel(context: PersistenceController.shared.container.viewContext))
     }
     
     var body: some View {
@@ -80,15 +80,18 @@ struct QuestionView: View {
                                             title: question.countries[0].country_name,
                                             id: question.countries[0].id,
                                             isSelected: viewModel.selectedOption == question.countries[0].id,
-                                            isCorrect: viewModel.isCorrect ?? false ? question.countries[0].id == question.answer_id : false,
+                                            isCorrect: (viewModel.shouldShowCorrectAnswer && question.countries[0].id == question.answer_id) ||
+                                                                   ((viewModel.isCorrect ?? false) && question.countries[0].id == question.answer_id),
                                             showResult: viewModel.gameState == .showingResult,
-                                            action: { viewModel.selectOption(question.countries[0].id) }
+                                            action: { viewModel.selectOption(question.countries[0].id)
+}
                                         )
                                         OptionButton(
                                             title: question.countries[1].country_name,
                                             id: question.countries[1].id,
                                             isSelected: viewModel.selectedOption == question.countries[1].id,
-                                            isCorrect: viewModel.isCorrect ?? false ? question.countries[1].id == question.answer_id : false,
+                                            isCorrect: (viewModel.shouldShowCorrectAnswer && question.countries[1].id == question.answer_id) ||
+                                                                   ((viewModel.isCorrect ?? false) && question.countries[1].id == question.answer_id),
                                             showResult: viewModel.gameState == .showingResult,
                                             action: { viewModel.selectOption(question.countries[1].id) }
                                         )
@@ -98,7 +101,8 @@ struct QuestionView: View {
                                             title: question.countries[2].country_name,
                                             id: question.countries[2].id,
                                             isSelected: viewModel.selectedOption == question.countries[2].id,
-                                            isCorrect: viewModel.isCorrect ?? false ? question.countries[2].id == question.answer_id : false,
+                                            isCorrect: (viewModel.shouldShowCorrectAnswer && question.countries[2].id == question.answer_id) ||
+                                                                  ((viewModel.isCorrect ?? false) && question.countries[2].id == question.answer_id),
                                             showResult: viewModel.gameState == .showingResult,
                                             action: { viewModel.selectOption(question.countries[2].id) }
                                         )
@@ -106,7 +110,9 @@ struct QuestionView: View {
                                             title: question.countries[3].country_name,
                                             id: question.countries[3].id,
                                             isSelected: viewModel.selectedOption == question.countries[3].id,
-                                            isCorrect: viewModel.isCorrect ?? false ? question.countries[3].id == question.answer_id : false,
+                                            isCorrect: (viewModel.shouldShowCorrectAnswer && question.countries[3].id == question.answer_id) ||
+                                                       ((viewModel.isCorrect ?? false) && question.countries[3].id == question.answer_id),
+
                                             showResult: viewModel.gameState == .showingResult,
                                             action: { viewModel.selectOption(question.countries[3].id) }
                                         )
@@ -125,16 +131,21 @@ struct QuestionView: View {
                                 .foregroundStyle(.black)
                             
                             
-                            Button(Constant.restart) {
+                            Button(action: {
                                 viewModel.resetGame()
+                            }) {
+                                Text(Constant.restart)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 50)
+                                    .background(Color.orange)
+                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .font(.system(size: 18, weight: .medium))
+                                    .padding(.horizontal)
                             }
-
-                            .padding()
-                            .background(Color.orange)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            NavigationLink(destination: ScheduleView().navigationBarBackButtonHidden(true), isActive: $viewModel.shouldNavigateToSchedule) {
+                                EmptyView()
+                            }
                         }
                     }
                 }
@@ -151,6 +162,9 @@ struct QuestionView: View {
         }
         .onAppear {
 //            viewModel.loadProgress()
+        }
+        .onDisappear {
+            viewModel.resetGame()
         }
     }
 }

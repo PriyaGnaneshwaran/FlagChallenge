@@ -1,5 +1,5 @@
 //
-//  WaitingView.swift
+//  CountDownView.swift
 //  FlagsChallange
 //
 //  Created by Priya Gnaneshwaran on 24/07/25.
@@ -12,7 +12,6 @@ struct CountDownView: View {
     @State private var isActive = true
     @State private var showChallenge = false
    
-    
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     var body: some View {
